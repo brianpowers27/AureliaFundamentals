@@ -5,6 +5,8 @@ import {BindingSignaler} from 'aurelia-templating-resources';
 import {inject} from 'aurelia-framework';
 import {HttpClient} from 'aurelia-http-client';
 import {HttpClient as HttpFetch, json} from 'aurelia-fetch-client';
+import {EventAggregator} from 'aurelia-event-aggregator';
+import {NotificationPayload} from 'common/NotificationPayload';
 
 function filterAndFormat(pastOrFuture, events) {
 	var results = JSON.parse(JSON.stringify(events));
@@ -27,24 +29,30 @@ function filterAndFormat(pastOrFuture, events) {
 	return results;
 }
 
-@inject(BindingSignaler, HttpClient, 'apiRoot', HttpFetch)
+@inject(BindingSignaler, HttpClient,'apiRoot', HttpFetch, EventAggregator)
 export class DataRepository {
-constructor(bindingSignaler, httpClient, apiRoot,httpFetch) {
-	this.httpClient = httpClient;
-	this.apiRoot = apiRoot;
-	this.httpFetch = httpFetch;
-	setInterval(()=> { bindingSignaler.signal('check-freshness'); },1000);
-}
+	constructor(bindingSignaler, httpClient, apiRoot, httpFetch, eventAggregator) {
+		this.apiRoot = apiRoot;
+		this.httpClient = httpClient;
+		this.httpFetch = httpFetch;
+		this.eventAggregator = eventAggregator;
+		setInterval(()=> { bindingSignaler.signal('check-freshness'); },1000);
+		setTimeout(() => this.backgroundNotificationReceived(this.eventAggregator), 5000);
+	}
+
+	backgroundNotificationReceived(ea){
+		ea.publish('topic',new NotificationPayload(moment().format("HH:mm:ss")));
+	}
 
 	getEvents(pastOrFuture) {
 		var promise = new Promise((resolve, reject) => {
 			if (!this.events) {
-				this.httpClient.get (this.apiRoot +'api/Events')
-				.then(result=> {
+				this.httpClient.get(this.apiRoot +'api/Events')
+				.then(result => {
 					var data = JSON.parse(result.response);
 					this.events = data.sort((a,b) =>
-						a.dateTime >= b.dateTime ? 1 : -1);
-					resolve(filterAndFormat(pastOrFuture,this.events));
+					 a.dateTime >= b.dateTime ? 1 : -1);
+					resolve(filterAndFormat(pastOrFuture, this.events));
 				});
 			}
 			else {
@@ -63,10 +71,10 @@ constructor(bindingSignaler, httpClient, apiRoot,httpFetch) {
 			this.httpFetch.fetch(this.apiRoot + 'api/Jobs',{
 				method: 'POST',
 				body: json(job)
-			}).then(response=> response.json())
-			.then(data=>{
+			}).then(response => response.json())
+			.then(data => {
 				this.jobs.push(data);
-				resolve(data);				
+				resolve(data);
 			}).catch(err=>reject(err));
 		});
 		return promise;
@@ -75,12 +83,12 @@ constructor(bindingSignaler, httpClient, apiRoot,httpFetch) {
 	getJobs() {
 		var promise = new Promise((resolve, reject) => {
 			if (!this.jobs) {
-				this.httpFetch.fetch(this.apiRoot+ 'api/Jobs')
+				this.httpFetch.fetch(this.apiRoot + 'api/Jobs')
 				.then(response => response.json())
-				.then(data => {
+				.then( data => {
 					this.jobs = data;
 					resolve(this.jobs);
-				}).catch(err=> reject(err));
+				}).catch(err => reject(err));
 			}
 			else
 				resolve(this.jobs);

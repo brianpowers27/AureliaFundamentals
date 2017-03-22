@@ -1,10 +1,23 @@
 import toastr from 'toastr';
 import moment from 'moment';
+import {EventAggregator} from 'aurelia-event-aggregator';
+import {NotificationPayload} from 'common/NotificationPayload';
+import {inject} from 'aurelia-framework';
 
+@inject(EventAggregator)
 export class Shell {
-	constructor() {
+	constructor(eventAggregator) {
+		this.eventAggregator = eventAggregator;
+		this.eventAggregator.subscribe('topic', payload =>{
+			this.notification = payload.time;
+		})
 		setInterval(()=>this.timeIs = moment().format("hh:mm:ss.SSS"),100);
 	}
+
+	clearNotification() {
+		this.notification = null;
+	}
+
 	configureRouter(config, router) {
 		this.router = router;
 		config.title = "Capital Area .NET User Group";

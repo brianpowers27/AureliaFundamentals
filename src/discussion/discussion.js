@@ -11,10 +11,6 @@ export class Discussion {
 	activate() {
 		this.discussionInput = getDiscussionInput();
 		this.originalInput = cloneObject(this.discussionInput);
-		// let promise = new Promise((resolve, reject) => {
-		// 	setTimeout(_ => resolve(), 3000);
-		// });
-		// return promise;	
 	}
 
 	save() {
