@@ -1,0 +1,18 @@
+<template>
+	<div class="row">
+		<div class="col-md-1">
+			<img src='images/speakers/${event.image}'style='width:100%;max-width:200px'/>
+		</div>
+		<div class="col-md-11">
+			<h3>${event.title}</h3>
+			<h5>${event.dateTime | dateFormat}</h5>
+			<button click.delegate='editEvent(event)' type="button">Edit</button>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-md-12">
+			${event.description}
+		</div>
+	</div>
+
+</template>
